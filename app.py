@@ -26,13 +26,18 @@ def classify_number():
         return jsonify({"error": "Missing 'number' parameter"}), 400
 
     try:
-        number = int(number)
+        # Convert the input to a float first (to handle decimals)
+        number = float(number)
     except ValueError:
         return jsonify({"number": number, "error": True}), 400
 
+    # If the number is a whole number, convert it to an integer
+    if number.is_integer():
+        number = int(number)
+
     # Calculate mathematical properties
-    is_prime = check_prime(number)
-    is_perfect = check_perfect(number)
+    is_prime = check_prime(number) if isinstance(number, int) else False
+    is_perfect = check_perfect(number) if isinstance(number, int) else False
     digit_sum = sum_digits(number)
     properties = determine_properties(number)
 
@@ -53,7 +58,7 @@ def classify_number():
 
 # Helper function to check if a number is prime
 def check_prime(n):
-    if n < 2:
+    if not isinstance(n, int) or n < 2:
         return False
     for i in range(2, int(n**0.5) + 1):
         if n % i == 0:
@@ -62,28 +67,33 @@ def check_prime(n):
 
 # Helper function to check if a number is perfect
 def check_perfect(n):
-    if n < 2:
+    if not isinstance(n, int) or n < 2:
         return False
     divisors = [i for i in range(1, n) if n % i == 0]
     return sum(divisors) == n
 
 # Helper function to calculate the sum of digits
 def sum_digits(n):
-    return sum(int(digit) for digit in str(abs(n)))
+    # Handle negative numbers by taking their absolute value
+    n_str = str(abs(n)).replace('.', '')  # Remove decimal points for floating-point numbers
+    return sum(int(digit) for digit in n_str)
 
 # Helper function to determine properties (Armstrong, odd/even)
 def determine_properties(n):
     properties = []
-    if is_armstrong(n):
+    if isinstance(n, int) and is_armstrong(n):
         properties.append("armstrong")
-    if n % 2 == 0:
-        properties.append("even")
-    else:
-        properties.append("odd")
+    if isinstance(n, (int, float)):
+        if n % 2 == 0:
+            properties.append("even")
+        else:
+            properties.append("odd")
     return properties
 
 # Helper function to check if a number is an Armstrong number
 def is_armstrong(n):
+    if not isinstance(n, int) or n < 0:
+        return False
     digits = [int(d) for d in str(n)]
     num_digits = len(digits)
     return sum(d**num_digits for d in digits) == n
